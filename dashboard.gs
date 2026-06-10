@@ -1,228 +1,110 @@
 // ============================================================
-// dashboard.gs — Script-rendered Sheet Dashboard
+// dashboard.gs — Full Sheet Render Canvas Paint Engine
 // ============================================================
 
 function renderDashboard() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var dash = ss.getSheetByName(CONFIG.SHEETS.DASHBOARD);
-  if (!dash) dash = ss.insertSheet(CONFIG.SHEETS.DASHBOARD);
+  var sheet = ss.getSheetByName(CONFIG.SHEETS.DASHBOARD);
+  if (!sheet) sheet = ss.insertSheet(CONFIG.SHEETS.DASHBOARD);
   
-  dash.clearContents();
-  dash.clearFormats();
+  sheet.clearContents();
+  sheet.clearFormats();
+  sheet.showSheet();
   
-  var BLUE = "#1a3c5e";
-  var LIGHT_BLUE = "#2c5f9e";
-  var WHITE = "#ffffff";
-  var LIGHT_GRAY = "#f5f7fa";
-  var GREEN = "#0f9d58";
-  var RED = "#db4437";
-  var YELLOW = "#f4b400";
-  var ORANGE = "#ff6d00";
+  var roster = processCrossBorderRoster();
+  var alerts = processAlertMatrices();
+  var risk = fetchNormalizedData(CONFIG.SHEETS.RISK);
+  var offboarded = fetchNormalizedData(CONFIG.SHEETS.OFFBOARDED);
+  var config = getLiveConfig();
+  var healthScore = calculateCompositeHRHealth();
+  
+  // Theme Variables
+  var NVY = "#1e3a8a", SIL = "#f8fafc", BORDER = "#e2e8f0", TXT = "#0f172a";
+  
+  sheet.getRange(1, 1, 1, 10).merge().setValue("🏢 Techolution Corporate HR Analytics Dashboard Pipeline")
+       .setBackground(NVY).setFontColor("#ffffff").setFontWeight("bold").setFontSize(14).setHorizontalAlignment("center");
+  sheet.setRowHeight(1, 40);
+  
+  sheet.getRange(2, 1, 1, 10).merge().setValue("📊 Real-Time Operations Data Engine State Sync: " + new Date().toLocaleString())
+       .setFontStyle("italic").setFontColor("#64748b").setFontSize(9);
 
-  function setCell(row, col, value, bold, bg, color, fontSize) {
-    var cell = dash.getRange(row, col);
-    cell.setValue(value);
-    if (bold) cell.setFontWeight("bold");
-    if (bg) cell.setBackground(bg);
-    if (color) cell.setFontColor(color);
-    if (fontSize) cell.setFontSize(fontSize);
-  }
-
-  function setHeader(row, col, value, colspan) {
-    var range = dash.getRange(row, col, 1, colspan || 1);
-    range.merge();
-    range.setValue(value);
-    range.setBackground(BLUE);
-    range.setFontColor(WHITE);
-    range.setFontWeight("bold");
-    range.setFontSize(11);
-    range.setHorizontalAlignment("center");
-  }
-
-  function setSectionTitle(row, value) {
-    var range = dash.getRange(row, 1, 1, 8);
-    range.merge();
-    range.setValue(value);
-    range.setBackground(LIGHT_BLUE);
-    range.setFontColor(WHITE);
-    range.setFontWeight("bold");
-    range.setFontSize(10);
-    range.setHorizontalAlignment("left");
-    var padding = dash.getRange(row, 1);
-    padding.setValue("  " + value);
-  }
-
-  // ── TITLE (CHANGED TO ENTERPRISE) ──
-  var titleRange = dash.getRange(1, 1, 1, 8);
-  titleRange.merge();
-  titleRange.setValue("🏢 Enterprise Global HR Automation Dashboard");
-  titleRange.setBackground(BLUE);
-  titleRange.setFontColor(WHITE);
-  titleRange.setFontWeight("bold");
-  titleRange.setFontSize(16);
-  titleRange.setHorizontalAlignment("center");
-  dash.setRowHeight(1, 45);
-
-  setCell(2, 1, "Last Updated: " + new Date().toLocaleString(), false, LIGHT_GRAY, "#666666", 9);
-  dash.getRange(2, 1, 1, 8).merge();
-
-  var indiaEmps = getIndiaEmployees();
-  var usEmps = getUSEmployees();
-  var allEmps = getAllEmployees();
-  var offboarded = getOffboarded();
-  var riskData = getRiskData();
-  var lwdAlerts = checkLWDAlerts();
-  var probAlerts = checkProbationAlerts();
-  var attrition = getQuarterlyAttrition();
-  var cfg = getLiveConfig();
-
-  var totalIndia = indiaEmps.length;
-  var totalUS = usEmps.length;
-  var totalHeadcount = totalIndia + totalUS;
-
-  var confirmed = allEmps.filter(function(e) {
-    return (e["Employment Status"] || "").toLowerCase().indexOf("confirmed") !== -1;
-  }).length;
-
-  var probation = allEmps.filter(function(e) {
-    return (e["Employment Status"] || "").toLowerCase().indexOf("probation") !== -1;
-  }).length;
-
-  var interns = allEmps.filter(function(e) {
-    return (e["Employment Status"] || "").toLowerCase().indexOf("intern") !== -1;
-  }).length;
-
-  var riskCount = riskData.length;
-
-  // ── SECTION 1: KPI STRIP ──
+  // ── 1. CORE KPI BLOCKS ──
   var row = 4;
-  setSectionTitle(row, "📊 KPI OVERVIEW");
+  sheet.getRange(row, 1, 1, 10).merge().setValue("⚡ REAL-TIME KEY PERFORMANCE INDICATORS").setBackground("#334155").setFontColor("#ffffff").setFontWeight("bold").setFontSize(10);
   row++;
-
-  var kpiHeaders = ["Total Headcount", "India", "US", "Confirmed", "On Probation", "Interns", "Risk Flags", "LWD Alerts"];
-  for (var k = 0; k < kpiHeaders.length; k++) {
-    setHeader(row, k + 1, kpiHeaders[k]);
+  
+  var kpis = [
+    ["Total Roster", roster.length],
+    ["India Roster", roster.filter(function(e){return e._region==="India"}).length],
+    ["US Roster", roster.filter(function(e){return e._region==="US"}).length],
+    ["HR Health Score", healthScore + "%"],
+    ["Risk Indicators", risk.length],
+    ["Active LWD Alerts", alerts.lwd.length]
+  ];
+  
+  for(var k=0; k<kpis.length; k++) {
+    sheet.getRange(row, k+1).setValue(kpis[k][0]).setBackground("#f1f5f9").setFontWeight("bold").setFontSize(9).setHorizontalAlignment("center");
+    sheet.getRange(row+1, k+1).setValue(kpis[k][1]).setFontSize(16).setFontWeight("bold").setHorizontalAlignment("center").setFontColor(kpis[k][0]==="Risk Indicators" && risk.length>0 ? "#dc2626":"#1e3a8a");
   }
+  sheet.getRange(row, 1, 2, kpis.length).setBorder(true, true, true, true, true, true, BORDER, SpreadsheetApp.BorderStyle.SOLID);
+  row += 3;
+  
+  // ── 2. INTERN CONTRACT EXPIRATIONS (LWD) ──
+  sheet.getRange(row, 1, 1, 10).merge().setValue("⚠️ CRITICAL INTERN EXPIRATION TRACKER (45 DAYS WINDOW)").setBackground("#b91c1c").setFontColor("#ffffff").setFontWeight("bold").setFontSize(10);
   row++;
-
-  var kpiValues = [totalHeadcount, totalIndia, totalUS, confirmed, probation, interns, riskCount, lwdAlerts.length];
-  var kpiBgs = [BLUE, LIGHT_BLUE, LIGHT_BLUE, GREEN, YELLOW, LIGHT_BLUE, RED, ORANGE];
-  for (var v = 0; v < kpiValues.length; v++) {
-    var kpiCell = dash.getRange(row, v + 1);
-    kpiCell.setValue(kpiValues[v]);
-    kpiCell.setBackground(kpiBgs[v]);
-    kpiCell.setFontColor(WHITE);
-    kpiCell.setFontWeight("bold");
-    kpiCell.setFontSize(18);
-    kpiCell.setHorizontalAlignment("center");
-    dash.setRowHeight(row, 50);
+  
+  sheet.getRange(row, 1, 1, 5).setValues([["Employee Candidate", "Regional Domain", "Department Unit", "LWD Date Target", "Calculated Delta Timeline"]]).setBackground("#f8fafc").setFontWeight("bold");
+  row++;
+  
+  if(alerts.lwd.length === 0) {
+    sheet.getRange(row, 1, 1, 5).merge().setValue("✅ No structural offboarding alerts pending verification inside execution loops.").setFontColor("#15803d").setFontStyle("italic");
+    row++;
+  } else {
+    alerts.lwd.forEach(function(l) {
+      sheet.appendRow([l.name, l.region, l.dept, Utilities.formatDate(l.date, Session.getScriptTimeZone(), "yyyy-MM-dd"), l.daysLeft + " Days Remaining"]);
+      row++;
+    });
   }
   row += 2;
 
-  // ── SECTION 2: LWD ALERTS ──
-  setSectionTitle(row, "⚠️ INTERN LWD ALERTS (Within " + (cfg["LWD_ALERT_DAYS"] || 45) + " Days)");
+  // ── 3. PROBATION CLEARANCE MILESTONES ──
+  sheet.getRange(row, 1, 1, 10).merge().setValue("🔔 UPCOMING EMPLOYEE PROBATION CLEARANCE FORECAST (30 DAYS WINDOW)").setBackground("#d97706").setFontColor("#ffffff").setFontWeight("bold").setFontSize(10);
   row++;
-
-  if (lwdAlerts.length === 0) {
-    var noAlert = dash.getRange(row, 1, 1, 8);
-    noAlert.merge();
-    noAlert.setValue("✅ No LWD alerts at this time");
-    noAlert.setBackground(GREEN);
-    noAlert.setFontColor(WHITE);
-    noAlert.setHorizontalAlignment("center");
-    row += 2;
-  } else {
-    var lwdHeaders = ["Employee Name", "Department", "LWD Date", "Days Left", "Status", "", "", ""];
-    for (var lh = 0; lh < 5; lh++) {
-      setHeader(row, lh + 1, lwdHeaders[lh]);
-    }
+  
+  sheet.getRange(row, 1, 1, 5).setValues([["Employee Name", "Region", "Department", "Target Confirmation Date", "Days Remaining Timeline"]]).setBackground("#f8fafc").setFontWeight("bold");
+  row++;
+  
+  if(alerts.probation.length === 0) {
+    sheet.getRange(row, 1, 1, 5).merge().setValue("✅ No operational probation cycles require escalation thresholds.").setFontColor("#15803d").setFontStyle("italic");
     row++;
-
-    lwdAlerts.forEach(function(a) {
-      dash.getRange(row, 1).setValue(a.name);
-      dash.getRange(row, 2).setValue(a.dept);
-      dash.getRange(row, 3).setValue(a.lwd ? Utilities.formatDate(new Date(a.lwd), Session.getScriptTimeZone(), "dd-MMM-yyyy") : "");
-      dash.getRange(row, 4).setValue(a.daysLeft);
-      var statusCell = dash.getRange(row, 5);
-      statusCell.setValue(a.status);
-      statusCell.setBackground(a.status === "PASSED" ? RED : ORANGE);
-      statusCell.setFontColor(WHITE);
-      dash.getRange(row, 1, 1, 8).setBackground(LIGHT_GRAY);
+  } else {
+    alerts.probation.forEach(function(p) {
+      sheet.appendRow([p.name, p.region, p.dept, Utilities.formatDate(p.confirmDate, Session.getScriptTimeZone(), "yyyy-MM-dd"), p.daysRemaining + " Days Left"]);
       row++;
     });
-    row++;
   }
+  row += 2;
 
-  // ── SECTION 3: PROBATION ALERTS ──
-  setSectionTitle(row, "🔔 PROBATION ALERTS (Confirmation Within " + (cfg["PROBATION_ALERT_DAYS"] || 30) + " Days)");
+  // ── 4. FINANCE PRODUCTIVITY HIGHLIGHTS ──
+  sheet.getRange(row, 1, 1, 10).merge().setValue("📊 HIGH-RISK PERFORMANCE & PRODUCTIVITY UNDERPERFORMANCE TRACE").setBackground("#475569").setFontColor("#ffffff").setFontWeight("bold").setFontSize(10);
   row++;
-
-  if (probAlerts.length === 0) {
-    var noProbAlert = dash.getRange(row, 1, 1, 8);
-    noProbAlert.merge();
-    noProbAlert.setValue("✅ No probation alerts at this time");
-    noProbAlert.setBackground(GREEN);
-    noProbAlert.setFontColor(WHITE);
-    noProbAlert.setHorizontalAlignment("center");
-    row += 2;
-  } else {
-    var probHeaders = ["Employee Name", "Department", "Date of Joining", "Confirmation Date", "Days Remaining", "", "", ""];
-    for (var ph = 0; ph < 5; ph++) {
-      setHeader(row, ph + 1, probHeaders[ph]);
-    }
+  
+  sheet.getRange(row, 1, 1, 4).setValues([["Employee", "Region", "Department", "Productivity Registered"]]).setBackground("#f8fafc").setFontWeight("bold");
+  row++;
+  
+  var targetProdVal = config["PRODUCTIVITY_TARGET"] || 75;
+  var lowProd = roster.filter(function(e) { return (e._productivity * 100) < targetProdVal; });
+  
+  if(lowProd.length === 0) {
+    sheet.getRange(row, 1, 1, 4).merge().setValue("✅ All resources actively clear operational efficiency metrics targets.").setFontColor("#15803d").setFontStyle("italic");
     row++;
-
-    probAlerts.forEach(function(a) {
-      dash.getRange(row, 1).setValue(a.name);
-      dash.getRange(row, 2).setValue(a.dept);
-      dash.getRange(row, 3).setValue(a.doj ? Utilities.formatDate(new Date(a.doj), Session.getScriptTimeZone(), "dd-MMM-yyyy") : "");
-      dash.getRange(row, 4).setValue(a.confirmDate ? Utilities.formatDate(new Date(a.confirmDate), Session.getScriptTimeZone(), "dd-MMM-yyyy") : "");
-      var daysCell = dash.getRange(row, 5);
-      daysCell.setValue(a.daysToConfirm);
-      daysCell.setBackground(a.daysToConfirm <= 7 ? RED : YELLOW);
-      daysCell.setFontColor(WHITE);
-      dash.getRange(row, 1, 1, 8).setBackground(LIGHT_GRAY);
+  } else {
+    lowProd.forEach(function(lp) {
+      sheet.appendRow([lp["Employee Name"] || lp["Name"], lp._region, lp["Department"], (lp._productivity * 100) + "%"]);
       row++;
     });
-    row++;
   }
-
-  // ── SECTION 4: DEPARTMENT BREAKDOWN ──
-  setSectionTitle(row, "🏬 DEPARTMENT BREAKDOWN");
-  row++;
-
-  setHeader(row, 1, "Department");
-  setHeader(row, 2, "Headcount");
-  setHeader(row, 3, "Confirmed");
-  setHeader(row, 4, "Probation");
-  setHeader(row, 5, "Interns");
-  row++;
-
-  var deptMap = {};
-  allEmps.forEach(function(emp) {
-    var dept = emp["Department"] || "Unknown";
-    var status = (emp["Employment Status"] || "").toLowerCase();
-    if (!deptMap[dept]) deptMap[dept] = { total: 0, confirmed: 0, probation: 0, interns: 0 };
-    deptMap[dept].total++;
-    if (status.indexOf("confirmed") !== -1) deptMap[dept].confirmed++;
-    else if (status.indexOf("probation") !== -1) deptMap[dept].probation++;
-    else if (status.indexOf("intern") !== -1) deptMap[dept].interns++;
-  });
-
-  var deptKeys = Object.keys(deptMap).sort();
-  deptKeys.forEach(function(dept) {
-    var d = deptMap[dept];
-    dash.getRange(row, 1).setValue(dept);
-    dash.getRange(row, 2).setValue(d.total);
-    dash.getRange(row, 3).setValue(d.confirmed);
-    dash.getRange(row, 4).setValue(d.probation);
-    dash.getRange(row, 5).setValue(d.interns);
-    dash.getRange(row, 1, 1, 5).setBackground(row % 2 === 0 ? LIGHT_GRAY : WHITE);
-    row++;
-  });
-  row++;
-
-  dash.autoResizeColumns(1, 8);
-  appendLog("INFO", "Dashboard rendered successfully — " + totalHeadcount + " employees");
-  SpreadsheetApp.flush();
+  
+  sheet.autoResizeColumns(1, 10);
+  appendSystemLog("SUCCESS", "Programmatic Spreadsheet Summary UI execution redrawn completely.");
 }
