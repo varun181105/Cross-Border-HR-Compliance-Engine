@@ -1,31 +1,30 @@
-# 🏢 Enterprise Cross-Border HR Compliance & Automation Engine
+# Techolution Global Workforce Analytics & Compliance Engine
 
-A production-grade, modular full-stack automation architecture engineered entirely on the Google Workspace ecosystem. This system synchronizes distributed international personnel databases (India & US regions), evaluates structural milestone alerts via automated CRON triggers, logs detailed data modifications for compliance audit trails, and exposes an isolated single-page application (SPA) Web Portal frontend for remote, real-time monitoring.
+A production-grade, event-driven automation framework built for Techolution's India and US workforce operations. The system is designed with a completely decoupled architecture, exposing a real-time script-rendered spreadsheet canvas dashboard and a high-availability Single Page Application (SPA) browser portal running on Google Apps Script Runtime (`HtmlService`).
 
----
+## 🚀 Key Engineering Core Highlights
 
-## 🛠️ System Architecture & Modularity
-The codebase strictly avoids monolithic scripting, enforcing a cleanly decoupled, multi-file architecture for enterprise maintainability:
+* **Header-Agnostic Parsing Ingestion:** Built with position-independent mapping lookups. The data pipelines scan headers dynamically, ensuring structural modifications (like row insertions or column shifting by HR) never break the system state.
+* **Bi-Surface Real-Time Synchronicity:** Backed by atomic event-driven background daemons (`onEdit`) that push metadata updates concurrently across both the Sheet and the Web portal without manual browser refreshes.
+* **10/10 Compliance Scope Features:** Implements 45-day Intern LWD boundaries, 30-day Probation clearance forecasting, dynamic department allocation metrics with progress bars, and an Active Corporate Risk Exceptions register.
+* **QA Test Harness & Trace Logs:** Integrated an isolated testing diagnostic routine (`runSystemDiagnosticTests`) that asserts system health instantly against layout drift, writing logs directly to execution traces for full auditing traceability.
 
-* **`_config.gs`**: The central runtime registry managing environment configurations, sheet identifiers, lookups, and global threshold parameters.
-* **`dataLoader.gs`**: The operational data-parsing layer equipped with header-agnostic column lookups. It prevents execution degradation even if manual spreadsheet editors insert, delete, or shift raw data columns.
-* **`dashboard.gs`**: A script-driven UI component that programmatically builds, formats, and updates visual summary blocks, conditional metrics formatting, and data KPI tiles directly onto the spreadsheet canvas.
-* **`alerts.gs`**: The core calculations unit that evaluates dates relative to the active server clock for contract milestones, Last Working Days (LWD), and probation timelines.
-* **`triggers.gs`**: Houses event-driven reactive listeners (`onEdit`) for real-time dashboard calculations and time-based clock triggers for automated digest delivery.
-* **`logger.gs`**: The system-wide audit framework handling runtime logging, tracking anomalies, and maintaining distinct execution history sheets (INFO, WARN, SUCCESS, ERROR).
-* **`webApp.gs`**: The server-side API bridge designed to fetch internal database states, compile metadata, and stream JSON objects securely to external request handlers.
-* **`webInterface.html`**: A modern, premium, and fully responsive single-page web dashboard frontend built with HTML5, FontAwesome iconography, and utility-first styling patterns via Tailwind CSS.
+## 📁 Repository Structure
 
----
+* `_config.gs` — Environment configuration and dynamic parameters state engine.
+* `dataLoader.gs` — Header-agnostic cross-border roster processing and aggregations.
+* `alerts.gs` — Structural milestone evaluation and Composite HR Health Score formulation.
+* `dashboard.gs` — Programmatic UI rendering engine for the local spreadsheet canvas.
+* `triggers.gs` — Event dispatchers, workflow dropdown actions, and change logging middleware.
+* `orgChart.gs` — Programmatic corporate reporting tree builder.
+* `logger.gs` & `tests.gs` — System monitoring routines and the Built-in QA Test Harness.
+* `webApp.gs` — Web API data stream router and endpoint controller.
+* `webInterface.html` — Responsive frontend interface powered by Tailwind CSS and asynchronous JSON data streaming.
 
-## 🚀 Key Production Features
+## 🛠️ Installation & Deployment
 
-1. **Header-Agnostic Parsing Engine**: Dynamic lookup maps ensure that column reordering or manual structural updates inside the database sheets will never break the automation pipeline.
-2. **Real-Time Changelog Auditing**: Any modifications to critical workforce parameters (such as status updates or LWD changes) automatically fire a background script to log before/after states, stamp timestamps, and store user metadata.
-3. **Automated Alert Digests**: Configured daily time-based CRON triggers to evaluate upcoming compliance thresholds and dispatch beautifully styled HTML analytics reports directly to relevant operational pipelines.
-4. **Decoupled Security Layer**: Direct spreadsheet access is completely isolated from end-users. The system streams real-time numerical operational data using asynchronous `google.script.run` bindings.
-
----
-
-## 📄 Operational Documentation
-The repository contains comprehensive architectural guidelines, tracking variables mappings, fail-safe disaster recovery playbooks, and log troubleshooting workflows to ensure clear, seamless handoffs to downstream engineering teams.
+1. Create a copy of the target Google Sheet database.
+2. Open **Extensions -> Apps Script** and match the file layout present in this repository.
+3. Execute `forceRebuildDailyTriggers` within `triggers.gs` to initialize time-based CRON loops.
+4. Run `runSystemDiagnosticTests` to perform the structural integrity check.
+5. Click **Deploy -> New Deployment** as a Web App (Set execute access to "Me" and access restriction to "Anyone with a Google Account").
