@@ -1,125 +1,80 @@
 // ============================================================
-// dataLoader.gs — All data reading functions
+// dataLoader.gs — Header-Agnostic Engine & Aggregations
 // ============================================================
 
-function getColIndex(headers, name) {
+function getColumnMapping(sheet) {
+  var mapping = {};
+  if (!sheet || sheet.getLastColumn() === 0) return mapping;
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   for (var i = 0; i < headers.length; i++) {
-    if (headers[i].toString().trim().toLowerCase() === name.toString().trim().toLowerCase()) {
-      return i;
-    }
+    if (headers[i]) mapping[headers[i].toString().trim().toLowerCase()] = i + 1;
   }
-  return -1;
+  return mapping;
 }
 
-function getSheetData(sheetName) {
+function fetchNormalizedData(sheetName) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(sheetName);
-  if (!sheet) return [];
-
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  
   var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return [];
-
-  var headers = data[0];
+  var headers = data[0].map(function(h) { return h.toString().trim(); });
   var rows = [];
-
+  
   for (var i = 1; i < data.length; i++) {
-    if (!data[i][0]) continue; 
-    var obj = {};
+    var row = data[i];
+    if (!row[0] && !row[1]) continue;
+    var record = {};
     for (var j = 0; j < headers.length; j++) {
-      obj[headers[j].toString().trim()] = data[i][j];
+      record[headers[j]] = row[j];
     }
-    rows.push(obj);
+    rows.push(record);
   }
   return rows;
 }
 
-function getIndiaEmployees() {
-  return getSheetData(CONFIG.SHEETS.INDIA_EMP);
-}
-
-function getUSEmployees() {
-  return getSheetData(CONFIG.SHEETS.US_EMP);
-}
-
-function getAllEmployees() {
-  var india = getIndiaEmployees().map(function(e) {
-    e._region = "India";
-    return e;
+function processCrossBorderRoster() {
+  var india = fetchNormalizedData(CONFIG.SHEETS.INDIA_EMP).map(function(e) { e._region = "India"; return e; });
+  var us = fetchNormalizedData(CONFIG.SHEETS.US_EMP).map(function(e) { e._region = "US"; return e; });
+  var finance = fetchNormalizedData(CONFIG.SHEETS.FINANCE);
+  var rmData = fetchNormalizedData(CONFIG.SHEETS.RM_DATA);
+  
+  var finMap = {};
+  finance.forEach(function(f) {
+    var id = f["Emp ID"] || f["Employee ID"];
+    if (id) finMap[id.toString().trim()] = f;
   });
-  var us = getUSEmployees().map(function(e) {
-    e._region = "US";
-    return e;
-  });
-  return india.concat(us);
-}
-
-function getOffboarded() {
-  return getSheetData(CONFIG.SHEETS.OFFBOARDED);
-}
-
-function getRiskData() {
-  return getSheetData(CONFIG.SHEETS.RISK);
-}
-
-function getProductivity() {
-  return getSheetData(CONFIG.SHEETS.PRODUCTIVITY);
-}
-
-function getCurrentMonthAllocation() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(CONFIG.SHEETS.RM_DATA);
-  if (!sheet) return [];
-
-  var data = sheet.getDataRange().getValues();
-  if (data.length < 2) return [];
-
-  var headers = data[0];
+  
   var today = new Date();
-  var currentMonth = today.toLocaleString('default', { month: 'long' });
-  var currentYear = today.getFullYear();
-  var searchStr = currentMonth + " " + currentYear;
-
-  var monthCol = -1;
-  for (var i = 0; i < headers.length; i++) {
-    if (headers[i].toString().indexOf(currentMonth) !== -1) {
-      monthCol = i;
+  var curMonthStr = today.toLocaleString('default', { month: 'long' }) + " " + today.getFullYear();
+  var allocationMap = {};
+  
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var rmSheet = ss.getSheetByName(CONFIG.SHEETS.RM_DATA);
+  var rmHeaders = rmSheet ? rmSheet.getRange(1, 1, 1, rmSheet.getLastColumn()).getValues()[0] : [];
+  var targetAllocCol = -1;
+  for (var c = 0; c < rmHeaders.length; c++) {
+    if (rmHeaders[c].toString().toLowerCase().indexOf(today.toLocaleString('default', { month: 'long' }).toLowerCase()) !== -1) {
+      targetAllocCol = rmHeaders[c].toString().trim();
       break;
     }
   }
 
-  var nameCol = getColIndex(headers, "Resource Name");
-  if (nameCol === -1) nameCol = 0;
-
-  var results = [];
-  for (var r = 1; r < data.length; r++) {
-    if (!data[r][nameCol]) continue;
-    results.push({
-      name: data[r][nameCol],
-      allocation: monthCol !== -1 ? data[r][monthCol] : "N/A",
-      month: searchStr
-    });
-  }
-  return results;
-}
-
-function getQuarterlyAttrition() {
-  var offboarded = getOffboarded();
-  var quarterly = {};
-
-  offboarded.forEach(function(emp) {
-    var exitDate = emp["Last Working Day"] || emp["LWD"] || emp["Exit Date"];
-    if (!exitDate) return;
-
-    var d = new Date(exitDate);
-    if (isNaN(d)) return;
-
-    var year = d.getFullYear();
-    var month = d.getMonth();
-    var quarter = "Q" + (Math.floor(month / 3) + 1) + " " + year;
-
-    if (!quarterly[quarter]) quarterly[quarter] = 0;
-    quarterly[quarter]++;
+  rmData.forEach(function(r) {
+    var name = r["Resource Name"] || r["Employee Name"];
+    if (name) {
+      allocationMap[name.toString().trim().toLowerCase()] = targetAllocCol !== -1 ? r[targetAllocCol] : "0%";
+    }
   });
 
-  return quarterly;
+  return india.concat(us).map(function(emp) {
+    var empId = (emp["Emp ID"] || emp["Employee ID"] || "").toString().trim();
+    var empName = (emp["Employee Name"] || emp["Name"] || "").toString().trim();
+    
+    var finInfo = finMap[empId] || {};
+    emp._ctcMonthly = finInfo["Monthly CTC"] || 0;
+    emp._productivity = finInfo["Productivity Average"] || 0;
+    emp._currentAllocation = allocationMap[empName.toLowerCase()] || "0%";
+    return emp;
+  });
 }
