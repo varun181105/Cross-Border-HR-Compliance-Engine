@@ -2,136 +2,204 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enterprise HR Compliance Engine</title>
+  <title>Techolution Corporate Workforce Intelligence Grid</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-    body { font-family: 'Inter', sans-serif; }
-    .loader {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #1e3a8a;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      animation: spin 1s linear infinite;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen text-slate-800">
+<body class="bg-slate-900 min-h-screen text-slate-100 selection:bg-blue-500/30">
 
-  <nav class="bg-blue-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
+  <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-xl">
     <div class="flex items-center space-x-3">
-      <i class="fa-solid fa-chart-network text-2xl text-amber-400"></i>
-      <h1 class="text-xl font-bold tracking-wide">Global HR Compliance Engine</h1>
-    </div>
-    <div class="flex items-center space-x-2 bg-blue-950 px-4 py-2 rounded-lg text-sm">
-      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span class="text-slate-300 font-medium">Live Connection Established</span>
-    </div>
-  </nav>
-
-  <main class="max-w-7xl mx-auto p-6 md:p-8">
-    
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-      <div>
-        <h2 class="text-2xl font-bold text-slate-900">Global HR Dashboard Metrics</h2>
-        <p class="text-slate-500 mt-1">Real-time data aggregated directly from employee infrastructure datastores.</p>
+      <div class="p-2 bg-blue-600 rounded-xl shadow-lg shadow-blue-500/20">
+        <i class="fa-solid fa-shield-halved text-xl text-white"></i>
       </div>
-      <button onclick="fetchMetrics()" id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl transition duration-200 flex items-center space-x-2 shadow-sm cursor-pointer">
-        <i id="refreshIcon" class="fa-solid fa-arrow-rotate-right"></i>
-        <span>Refresh Metrics</span>
+      <div>
+        <h1 class="text-lg font-extrabold tracking-tight bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">Techolution Intelligence Hub</h1>
+        <p class="text-xs text-slate-500 font-medium tracking-wide">Production Automation Framework 10/10</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2 bg-slate-900 px-3.5 py-1.5 rounded-xl border border-slate-800 text-xs">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+      <span class="text-slate-400 font-semibold tracking-wider uppercase">Live State Synced</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto p-6 lg:p-8 space-y-8">
+    
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-950 p-6 rounded-3xl border border-slate-800/60 shadow-2xl">
+      <div>
+        <h2 class="text-xl font-extrabold text-white">Workforce Operations Command Center</h2>
+        <p class="text-sm text-slate-400 mt-0.5">Real-time data engine executing header-agnostic automation streams.</p>
+      </div>
+      <button onclick="synchronizeExecutionState()" id="syncButton" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm px-6 py-3 rounded-2xl transition duration-300 transform active:scale-95 flex items-center space-x-2 shadow-xl cursor-pointer">
+        <i id="syncIcon" class="fa-solid fa-arrows-rotate text-sm"></i>
+        <span>Trigger System Audit Sync</span>
       </button>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
-        <div>
-          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Total Headcount</p>
-          <h3 id="totalHeadcount" class="text-3xl font-bold text-slate-900 mt-2">--</h3>
-        </div>
-        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-xl">
-          <i class="fa-solid fa-users"></i>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
-        <div>
-          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">India Region</p>
-          <h3 id="indiaCount" class="text-3xl font-bold text-slate-900 mt-2">--</h3>
-        </div>
-        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-xl">
-          <i class="fa-solid fa-flag-alt"></i>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
-        <div>
-          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">US Region</p>
-          <h3 id="usCount" class="text-3xl font-bold text-slate-900 mt-2">--</h3>
-        </div>
-        <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl">
-          <i class="fa-solid fa-globe-americas"></i>
-        </div>
-      </div>
-
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
-        <div>
-          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Risk Exceptions</p>
-          <h3 id="riskEntries" class="text-3xl font-bold text-rose-600 mt-2">--</h3>
-        </div>
-        <div class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 text-xl">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-        </div>
-      </div>
-
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-5">
+      <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800/80"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Global Headcount</p><h3 id="m_headcount" class="text-2xl font-black text-white mt-3">--</h3></div>
+      <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800/80"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest">India Region</p><h3 id="m_india" class="text-2xl font-black text-white mt-3">--</h3></div>
+      <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800/80"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest">US Region</p><h3 id="m_us" class="text-2xl font-black text-white mt-3">--</h3></div>
+      <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800/80"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Risk Indicators</p><h3 id="m_risk" class="text-2xl font-black text-rose-500 mt-3">--</h3></div>
+      <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800/80"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest">HR Health Score</p><h3 id="m_health" class="text-2xl font-black text-amber-400 mt-3">--</h3></div>
+      <div class="bg-slate-950 p-5 rounded-2xl border border-slate-800/80"><p class="text-xs font-bold text-slate-500 uppercase tracking-widest">Quarterly Attrition</p><h3 id="m_attrition" class="text-2xl font-black text-violet-400 mt-3">--</h3></div>
     </div>
 
-    <div class="bg-slate-100 rounded-xl p-4 flex items-center justify-between text-xs text-slate-500 border border-slate-200/60">
-      <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-clock text-slate-400"></i>
-        <span>Data State Engine Runtime Sync: <strong id="timestamp" class="text-slate-700">Never Synchronized</strong></span>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-xl">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-rose-400 mb-4"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Intern LWD Alerts (45-Day Boundary)</h3>
+        <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="text-slate-500 border-b border-slate-800 uppercase font-semibold"><th class="pb-2">Name</th><th class="pb-2">Region</th><th class="pb-2 text-right">Timeline</th></thead><tbody id="lwdTableBody" class="divide-y divide-slate-800/50"></tbody></table></div>
       </div>
-      <span class="hidden sm:inline">Engine Version: 1.0.4 (Stable Master)</span>
+      <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-xl">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-amber-400 mb-4"><i class="fa-solid fa-user-clock mr-2"></i>Probation Tracking Pipeline (30-Day Boundary)</h3>
+        <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="text-slate-500 border-b border-slate-800 uppercase font-semibold"><th class="pb-2">Employee</th><th class="pb-2">Department</th><th class="pb-2 text-right">Delta Status</th></thead><tbody id="probationTableBody" class="divide-y divide-slate-800/50"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-xl">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-blue-400 mb-4"><i class="fa-solid fa-chart-pie mr-2"></i>Department Allocation Matrix</h3>
+        <div id="deptContainer" class="space-y-3 max-h-60 overflow-y-auto pr-2"></div>
+      </div>
+      
+      <div class="bg-slate-950 rounded-2xl border border-slate-800 p-6 shadow-xl lg:col-span-2">
+        <h3 class="font-bold text-xs uppercase tracking-wider text-purple-400 mb-4"><i class="fa-solid fa-skull-crossbones mr-2"></i>Active Corporate Risk Exceptions Register</h3>
+        <div class="overflow-x-auto max-h-60 overflow-y-auto"><table class="w-full text-left text-xs"><thead class="text-slate-500 border-b border-slate-800 uppercase font-semibold"><th class="pb-2">Employee Name</th><th class="pb-2">Risk Evaluation Category</th><th class="pb-2">Operational Mitigation Status</th></thead><tbody id="riskTableBody" class="divide-y divide-slate-800/50"></tbody></table></div>
+      </div>
+    </div>
+
+    <div class="bg-slate-950 rounded-3xl border border-slate-800 p-6 shadow-2xl space-y-6">
+      <div class="border-b border-slate-800 pb-4">
+        <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-filter mr-2 text-indigo-500"></i>Dynamic Search & Drill-Down Matrix Layer</h3>
+        <p class="text-xs text-slate-500 mt-1">Multi-variable structural filtering execution parameters on global active memory datasets.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div><label class="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Region Filter</label><select id="f_region" onchange="applyDataFilters()" class="w-full text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-300 outline-none focus:border-blue-500"><option value="">All Regions</option><option value="India">India</option><option value="US">US</option></select></div>
+        <div><label class="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Department Node</label><select id="f_dept" onchange="applyDataFilters()" class="w-full text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-300 outline-none focus:border-blue-500"><option value="">All Departments</option></select></div>
+        <div><label class="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Employment Status</label><select id="f_status" onchange="applyDataFilters()" class="w-full text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-300 outline-none focus:border-blue-500"><option value="">All Statuses</option><option value="Confirmed">Confirmed</option><option value="Under Probation">Under Probation</option><option value="Intern">Intern</option></select></div>
+        <div><label class="block text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Direct Search Bar</label><input id="f_search" onkeyup="applyDataFilters()" type="text" placeholder="Filter employee name..." class="w-full text-xs bg-slate-900 border border-slate-800 rounded-xl p-3 text-slate-300 outline-none focus:border-blue-500"/></div>
+      </div>
+      <div class="overflow-x-auto pt-2"><table class="w-full text-left text-xs"><thead class="text-slate-500 border-b border-slate-800 uppercase font-bold tracking-wider"><th class="pb-3">ID</th><th class="pb-3">Employee Name</th><th class="pb-3">Department</th><th class="pb-3">Reporting Manager</th><th class="pb-3">Region</th><th class="pb-3 text-right">Status Code</th></thead><tbody id="drillDownTableBody" class="divide-y divide-slate-800/40"></tbody></table></div>
+    </div>
+
+    <div class="bg-slate-950 rounded-2xl p-4 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 border border-slate-800/60 gap-2">
+      <div class="flex items-center space-x-2"><i class="fa-solid fa-circle-nodes text-slate-600"></i><span>System Data Pipeline State Clock Offset: <strong id="timestampUI" class="text-slate-300">Awaiting Primary Synchronization...</strong></span></div>
+      <span class="font-medium">Engine Build Core Version: 1.0.5 (Verified Production)</span>
     </div>
 
   </main>
 
   <script>
+    let globalRosterMemory = [];
+
     window.addEventListener('DOMContentLoaded', () => {
-      fetchMetrics();
+      synchronizeExecutionState();
     });
 
-    function fetchMetrics() {
-      const btn = document.getElementById('refreshBtn');
-      const icon = document.getElementById('refreshIcon');
-      
-      btn.disabled = true;
-      icon.classList.add('fa-spin', 'text-amber-400');
+    function synchronizeExecutionState() {
+      const btn = document.getElementById('syncButton');
+      const icon = document.getElementById('syncIcon');
+      btn.disabled = true; icon.className = 'fa-solid fa-arrows-rotate fa-spin mr-2';
       
       google.script.run
-        .withSuccessHandler(function(response) {
-          if(response.success) {
-            document.getElementById('totalHeadcount').innerText = response.totalHeadcount;
-            document.getElementById('indiaCount').innerText = response.indiaCount;
-            document.getElementById('usCount').innerText = response.usCount;
-            document.getElementById('riskEntries').innerText = response.riskEntries;
-            document.getElementById('timestamp').innerText = response.timestamp;
+        .withSuccessHandler(function(res) {
+          if(res.success) {
+            globalRosterMemory = res.rawRosterData;
+            document.getElementById('m_headcount').innerText = res.kpis.totalHeadcount;
+            document.getElementById('m_india').innerText = res.kpis.indiaCount;
+            document.getElementById('m_us').innerText = res.kpis.usCount;
+            document.getElementById('m_risk').innerText = res.kpis.riskEntries;
+            document.getElementById('m_health').innerText = res.kpis.healthIndex + "%";
+            document.getElementById('m_attrition').innerText = res.kpis.attritionPercentage;
+            document.getElementById('timestampUI').innerText = res.timestamp;
+            
+            // Render Critical Expirations Tables
+            const lwdBody = document.getElementById('lwdTableBody');
+            lwdBody.innerHTML = res.alerts.lwd.length === 0 ? `<tr><td colspan="3" class="py-4 text-center text-emerald-400 italic bg-emerald-500/5 rounded-xl">No active warnings flagged in execution queues.</td></tr>` : '';
+            res.alerts.lwd.forEach(l => {
+              lwdBody.innerHTML += `<tr class="hover:bg-slate-900/30"><td class="py-3 font-semibold text-white">${l.name}</td><td class="text-slate-400">${l.region}</td><td class="text-right font-bold text-rose-400">${l.daysLeft} Days</td></tr>`;
+            });
+
+            // Render Probation Milestone Arrays
+            const probBody = document.getElementById('probationTableBody');
+            probBody.innerHTML = res.alerts.probation.length === 0 ? `<tr><td colspan="3" class="py-4 text-center text-emerald-400 italic bg-emerald-500/5 rounded-xl">No impending clearance validations monitored.</td></tr>` : '';
+            res.alerts.probation.forEach(p => {
+              probBody.innerHTML += `<tr class="hover:bg-slate-900/30"><td class="py-3 font-semibold text-white">${p.name}</td><td class="text-slate-400">${p.dept}</td><td class="text-right font-bold text-amber-400">${p.daysRemaining} Days Out</td></tr>`;
+            });
+
+            // Render Dynamic Department Allocations Progress Strips
+            const deptBox = document.getElementById('deptContainer'); deptBox.innerHTML = '';
+            res.departmentBreakdown.forEach(d => {
+              deptBox.innerHTML += `<div><div class="flex justify-between text-xs mb-1"><span class="text-slate-400 font-medium">${d.department}</span><span class="text-white font-bold">${d.count}</span></div><div class="w-full bg-slate-800 h-1.5 rounded-full"><div class="bg-blue-500 h-1.5 rounded-full" style="width: ${Math.min(100, (d.count / res.kpis.totalHeadcount) * 100)}%"></div></div></div>`;
+            });
+
+            // Populate Dynamic Dropdowns for Departments Filter List
+            const deptDropdown = document.getElementById('f_dept');
+            deptDropdown.innerHTML = '<option value="">All Departments</option>';
+            res.departmentBreakdown.forEach(d => {
+              deptDropdown.innerHTML += `<option value="${d.department}">${d.department}</option>`;
+            });
+
+            // Render Risk Registers Tables Outlines
+            const riskBody = document.getElementById('riskTableBody');
+            riskBody.innerHTML = res.riskRegister.length === 0 ? `<tr><td colspan="3" class="py-4 text-center text-slate-500 italic">No historical risk records active inside the cache database.</td></tr>` : '';
+            res.riskRegister.forEach(r => {
+              riskBody.innerHTML += `<tr class="hover:bg-slate-900/30"><td class="py-3 font-bold text-slate-200">${r.name}</td><td class="text-rose-400 font-medium"><span class="bg-rose-500/10 px-2 py-0.5 border border-rose-500/20 rounded-md">${r.riskFactor}</span></td><td class="text-slate-400 italic">${r.mitigation}</td></tr>`;
+            });
+
+            // Trigger primary state initialization on Drill Down view matrices
+            applyDataFilters();
+
           } else {
-            alert("Backend Engine Error Exception: " + response.error);
+            alert("Data Engine Stream Synchronization Fault: " + res.error);
           }
-          btn.disabled = false;
-          icon.classList.remove('fa-spin', 'text-amber-400');
+          btn.disabled = false; icon.className = 'fa-solid fa-arrows-rotate mr-2';
         })
-        .withFailureHandler(function(error) {
-          alert("Network Request Isolation Failed: " + error.toString());
-          btn.disabled = false;
-          icon.classList.remove('fa-spin', 'text-amber-400');
+        .withFailureHandler(function(err) {
+          alert("Critical App Failure Interruption Exception: " + err.toString());
+          btn.disabled = false; icon.className = 'fa-solid fa-arrows-rotate mr-2';
         })
-        .getLiveDashboardMetrics(); 
+        .streamGlobalEnterpriseMetrics();
+    }
+
+    function applyDataFilters() {
+      const regionVal = document.getElementById('f_region').value.toLowerCase();
+      const deptVal = document.getElementById('f_dept').value.toLowerCase();
+      const statusVal = document.getElementById('f_status').value.toLowerCase();
+      const searchVal = document.getElementById('f_search').value.toLowerCase();
+      
+      const tableBody = document.getElementById('drillDownTableBody');
+      tableBody.innerHTML = '';
+      
+      const filtered = globalRosterMemory.filter(emp => {
+        const matchesRegion = !regionVal || emp.region.toLowerCase() === regionVal;
+        const matchesDept = !deptVal || emp.dept.toLowerCase() === deptVal;
+        const matchesStatus = !statusVal || emp.status.toLowerCase().includes(statusVal);
+        const matchesSearch = !searchVal || emp.name.toLowerCase().includes(searchVal);
+        return matchesRegion && matchesDept && matchesStatus && matchesSearch;
+      });
+
+      if(filtered.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-500 italic">No structured entries match specified lookup constraints.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(emp => {
+        tableBody.innerHTML += `
+          <tr class="hover:bg-slate-900/30 transition border-b border-slate-800/40">
+            <td class="py-3 font-mono text-slate-500 text-[11px]">${emp.id}</td>
+            <td class="font-bold text-white">${emp.name}</td>
+            <td class="text-slate-400">${emp.dept}</td>
+            <td class="text-slate-400">${emp.manager}</td>
+            <td class="text-slate-400">${emp.region}</td>
+            <td class="text-right"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${emp.status.includes('Confirmed') ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}">${emp.status}</span></td>
+          </tr>`;
+      });
     }
   </script>
 </body>
