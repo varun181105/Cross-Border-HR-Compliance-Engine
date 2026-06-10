@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enterprise HR Compliance Engine</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .loader {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #1e3a8a;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+  <nav class="bg-blue-900 text-white shadow-md px-6 py-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <i class="fa-solid fa-chart-network text-2xl text-amber-400"></i>
+      <h1 class="text-xl font-bold tracking-wide">Global HR Compliance Engine</h1>
+    </div>
+    <div class="flex items-center space-x-2 bg-blue-950 px-4 py-2 rounded-lg text-sm">
+      <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+      <span class="text-slate-300 font-medium">Live Connection Established</span>
+    </div>
+  </nav>
+
+  <main class="max-w-7xl mx-auto p-6 md:p-8">
+    
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div>
+        <h2 class="text-2xl font-bold text-slate-900">Global HR Dashboard Metrics</h2>
+        <p class="text-slate-500 mt-1">Real-time data aggregated directly from employee infrastructure datastores.</p>
+      </div>
+      <button onclick="fetchMetrics()" id="refreshBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-5 py-2.5 rounded-xl transition duration-200 flex items-center space-x-2 shadow-sm cursor-pointer">
+        <i id="refreshIcon" class="fa-solid fa-arrow-rotate-right"></i>
+        <span>Refresh Metrics</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Total Headcount</p>
+          <h3 id="totalHeadcount" class="text-3xl font-bold text-slate-900 mt-2">--</h3>
+        </div>
+        <div class="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 text-xl">
+          <i class="fa-solid fa-users"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">India Region</p>
+          <h3 id="indiaCount" class="text-3xl font-bold text-slate-900 mt-2">--</h3>
+        </div>
+        <div class="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 text-xl">
+          <i class="fa-solid fa-flag-alt"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">US Region</p>
+          <h3 id="usCount" class="text-3xl font-bold text-slate-900 mt-2">--</h3>
+        </div>
+        <div class="w-12 h-12 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 text-xl">
+          <i class="fa-solid fa-globe-americas"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/80 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-semibold text-slate-400 uppercase tracking-wider">Risk Exceptions</p>
+          <h3 id="riskEntries" class="text-3xl font-bold text-rose-600 mt-2">--</h3>
+        </div>
+        <div class="w-12 h-12 bg-rose-50 rounded-xl flex items-center justify-center text-rose-600 text-xl">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="bg-slate-100 rounded-xl p-4 flex items-center justify-between text-xs text-slate-500 border border-slate-200/60">
+      <div class="flex items-center space-x-2">
+        <i class="fa-solid fa-clock text-slate-400"></i>
+        <span>Data State Engine Runtime Sync: <strong id="timestamp" class="text-slate-700">Never Synchronized</strong></span>
+      </div>
+      <span class="hidden sm:inline">Engine Version: 1.0.4 (Stable Master)</span>
+    </div>
+
+  </main>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      fetchMetrics();
+    });
+
+    function fetchMetrics() {
+      const btn = document.getElementById('refreshBtn');
+      const icon = document.getElementById('refreshIcon');
+      
+      btn.disabled = true;
+      icon.classList.add('fa-spin', 'text-amber-400');
+      
+      google.script.run
+        .withSuccessHandler(function(response) {
+          if(response.success) {
+            document.getElementById('totalHeadcount').innerText = response.totalHeadcount;
+            document.getElementById('indiaCount').innerText = response.indiaCount;
+            document.getElementById('usCount').innerText = response.usCount;
+            document.getElementById('riskEntries').innerText = response.riskEntries;
+            document.getElementById('timestamp').innerText = response.timestamp;
+          } else {
+            alert("Backend Engine Error Exception: " + response.error);
+          }
+          btn.disabled = false;
+          icon.classList.remove('fa-spin', 'text-amber-400');
+        })
+        .withFailureHandler(function(error) {
+          alert("Network Request Isolation Failed: " + error.toString());
+          btn.disabled = false;
+          icon.classList.remove('fa-spin', 'text-amber-400');
+        })
+        .getLiveDashboardMetrics(); 
+    }
+  </script>
+</body>
+</html>
