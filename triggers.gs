@@ -1,5 +1,5 @@
 // ============================================================
-// triggers.gs — UI Listeners & Automation Timers
+// triggers.gs — Automated Active Listeners & Webhooks
 // ============================================================
 
 function onEdit(e) {
@@ -8,72 +8,101 @@ function onEdit(e) {
   var sheet = range.getSheet();
   var sheetName = sheet.getName();
   
-  if (sheetName !== CONFIG.SHEETS.INDIA_EMP && sheetName !== CONFIG.SHEETS.US_EMP) return;
+  // Formulate dynamic context validation bounds
+  if (sheetName !== CONFIG.SHEETS.INDIA_EMP && sheetName !== CONFIG.SHEETS.US_EMP && sheetName !== CONFIG.SHEETS.RISK) return;
   
   var row = range.getRow();
   var col = range.getColumn();
-  if (row === 1) return; 
+  if (row === 1) return; // Ignore headers schema modifications
   
   var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  var statusColIndex = getColIndex(headers, "Employment Status") + 1;
-  var lwdColIndex = getColIndex(headers, "LWD") + 1;
-  var nameColIndex = getColIndex(headers, "Employee Name") + 1;
+  var nameCol = getColIndexCaseInsensitive(headers, "Employee Name") || getColIndexCaseInsensitive(headers, "Name");
+  var statusCol = getColIndexCaseInsensitive(headers, "Employment Status");
   
-  if (col === statusColIndex || col === lwdColIndex) {
-    var empName = sheet.getRange(row, nameColIndex).getValue() || "Resource";
-    var oldVal = e.oldValue || "Empty";
-    var newVal = e.value || "Empty";
+  var empName = nameCol ? sheet.getRange(row, nameCol + 1).getValue() : "Unknown Resource";
+  var oldVal = e.oldValue || "Null Context";
+  var newVal = e.value || "Null Context";
+  
+  // ── 10/10 WORKFLOW DROPDOWN AUTOMATION ENGINE ──
+  if (col === (statusCol + 1) && newVal === "Start Offboarding") {
+    executeWorkflowAutomation(sheet, row, empName, "OFFBOARDING_PIPELINE");
+    return;
+  }
+  
+  // Append standard trace logs down to compliance auditing sheets
+  commitToChangeLog(sheetName, empName, headers[col - 1] || "Cell Factor", oldVal, newVal);
+  
+  // Asynchronous Interface Re-render Triggering
+  renderDashboard();
+  generateHierarchicalOrgChart();
+}
+
+function executeWorkflowAutomation(sheet, row, empName, type) {
+  var userEmail = Session.getActiveUser().getEmail() || "automation@techolution.com";
+  
+  if (type === "OFFBOARDING_PIPELINE") {
+    sheet.getRange(row, getColIndexCaseInsensitive(sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0], "Employment Status") + 1).setValue("Intern (Offboarding Initiated)");
     
-    logSystemChange(sheetName, empName, sheet.getRange(1, col).getValue(), oldVal, newVal);
+    // Stamp the event into data sheets downstream
+    commitToChangeLog(sheet.getName(), empName, "Employment Status", "Start Offboarding", "Intern (Offboarding Initiated)");
+    
+    // Dispatch instant structural alerts to corporate systems
+    var mailConfig = getLiveConfig();
+    var recipient = mailConfig["HR_RECIPIENT"] || "hr@techolution.com";
+    
+    MailApp.sendEmail({
+      to: recipient,
+      subject: "🚨 CRITICAL WORKFLOW RUNTIME: Offboarding Flag Activated for " + empName,
+      htmlBody: "<p>The compliance workflow engine detected manual deployment of offboarding protocols for resource <strong>" + empName + "</strong> initiated by administrator target user: " + userEmail + "</p>"
+    });
+    
+    appendSystemLog("WARN", "Workflow Engine forced offboarding state sequence parameters for: " + empName);
     renderDashboard();
   }
 }
 
-function logSystemChange(sheet, emp, field, oldV, newV) {
+function commitToChangeLog(sheet, emp, parameter, before, after) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var changeSheet = ss.getSheetByName(CONFIG.SHEETS.CHANGELOG);
-  
-  if (!changeSheet) {
-    changeSheet = ss.insertSheet(CONFIG.SHEETS.CHANGELOG);
-    changeSheet.appendRow(["Timestamp", "Sheet", "Employee", "Field", "Before", "After", "Editor"]);
-    changeSheet.getRange("A1:G1").setBackground("#2c5f9e").setFontColor("#ffffff").setFontWeight("bold");
+  var logSheet = ss.getSheetByName(CONFIG.SHEETS.CHANGELOG);
+  if (!logSheet) {
+    logSheet = ss.insertSheet(CONFIG.SHEETS.CHANGELOG);
+    logSheet.appendRow(["Execution ID Stamp", "Target Layer", "Profile Resource", "Parameter Checked", "Historical State", "Mutated State", "Operator Account"]);
   }
-  
-  changeSheet.appendRow([new Date(), sheet, emp, field, oldV, newV, Session.getActiveUser().getEmail()]);
-  appendLog("INFO", "Change compiled into Changelog tab for: " + emp);
+  var id = "RUN-" + Math.floor(Math.random() * 900000 + 100000);
+  logSheet.appendRow([id, sheet, emp, parameter, before, after, Session.getActiveUser().getEmail()]);
 }
 
-function activateDailyCrons() {
+function getColIndexCaseInsensitive(headers, target) {
+  for (var i = 0; i < headers.length; i++) {
+    if (headers[i].toString().toLowerCase().trim() === target.toLowerCase().trim()) return i;
+  }
+  return -1;
+}
+
+function forceRebuildDailyTriggers() {
   var triggers = ScriptApp.getProjectTriggers();
-  triggers.forEach(function(t) {
-    if (t.getHandlerFunction() === 'sendEmailDigest') ScriptApp.deleteTrigger(t);
-  });
+  triggers.forEach(function(t) { ScriptApp.deleteTrigger(t); });
   
-  ScriptApp.newTrigger('sendEmailDigest')
-           .timeBased()
-           .everyDays(1)
-           .atHour(8)
-           .create();
+  ScriptApp.newTrigger('dispatchDailyAnalyticalDigest')
+           .timeBased().everyDays(1).atHour(8).create();
            
-  appendLog("SUCCESS", "Time-based daily CRON trigger successfully bound.");
+  appendSystemLog("SUCCESS", "Time-based structural framework binding completed dynamically.");
 }
 
-function sendEmailDigest() {
+function dispatchDailyAnalyticalDigest() {
+  var alerts = processAlertMatrices();
+  if (alerts.lwd.length === 0 && alerts.probation.length === 0) return;
+  
   var cfg = getLiveConfig();
-  var hrEmail = cfg["HR_RECIPIENT"] || CONFIG.EMAIL.HR_RECIPIENT;
+  var hrEmail = cfg["HR_RECIPIENT"] || "hr@techolution.com";
   
-  var lwd = checkLWDAlerts();
-  var prob = checkProbationAlerts();
-  
-  if (lwd.length === 0 && prob.length === 0) return; 
-  
-  var body = "<h3>Enterprise Automation Report Summary</h3><p>Active alerts pending validation on your HR Dashboard Sheet.</p>";
+  var html = "<h2>Techolution HR Compliance — System Operational Alert Digest</h2>";
+  html += "<p>Automated evaluation summary derived relative to active database execution vectors.</p>";
   
   MailApp.sendEmail({
     to: hrEmail,
-    subject: CONFIG.EMAIL.DIGEST_SUBJECT,
-    htmlBody: body
+    subject: "📋 Techolution Global Workforce Compliance System - Daily Alert Overview",
+    htmlBody: html
   });
-  
-  appendLog("SUCCESS", "Daily summary email alert dispatched to: " + hrEmail);
+  appendSystemLog("SUCCESS", "Time-based CRON notification digest routed out to operational targets.");
 }
