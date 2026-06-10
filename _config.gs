@@ -1,15 +1,13 @@
 // ============================================================
-// _config.gs — All configurable settings live here
+// _config.gs — Central Configuration & State Engine
 // ============================================================
 
 var CONFIG = {
-  // Sheet tab names
   SHEETS: {
     INDIA_EMP: "India Employee Database",
     US_EMP: "US Employee Database",
     RM_DATA: "RM Data",
-    FINANCE: "Finance",
-    PRODUCTIVITY: "Productivity",
+    FINANCE: "Finance Productivity",
     RISK: "Risk Report",
     OFFBOARDED: "Offboarded Resources",
     DASHBOARD: "Dashboard",
@@ -17,85 +15,36 @@ var CONFIG = {
     DRILL_DOWN: "Drill Down",
     LOGS: "Logs",
     CHANGELOG: "Changelog",
-    CONFIG: "_Config"
-  },
-
-  // Alert thresholds — change here, nowhere else
-  THRESHOLDS: {
-    LWD_ALERT_DAYS: 45,
-    PROBATION_ALERT_DAYS: 30,
-    PROBATION_PERIOD_DAYS: 180,
-    PRODUCTIVITY_TARGET: 75
-  },
-
-  // Email recipients
-  EMAIL: {
-    HR_RECIPIENT: "hr@yourcompany.com",
-    DIGEST_SUBJECT: "Enterprise HR Automation Dashboard — Daily Alert Digest"
-  },
-
-  // Column headers — header-agnostic lookup
-  COLUMNS: {
-    INDIA: {
-      EMP_ID: "Employee ID",
-      NAME: "Employee Name",
-      DEPT: "Department",
-      DESIGNATION: "Designation",
-      MANAGER: "Reporting Manager",
-      SKILLSET: "Skillset",
-      DOJ: "Date of Joining",
-      STATUS: "Employment Status",
-      LWD: "LWD"
-    },
-    US: {
-      EMP_ID: "Employee ID",
-      NAME: "Employee Name",
-      DEPT: "Department",
-      DESIGNATION: "Designation",
-      MANAGER: "Reporting Manager",
-      SKILLSET: "Skillset",
-      DOJ: "Date of Joining",
-      STATUS: "Employment Status",
-      ALLOCATION: "Allocation %",
-      CTC: "CTC"
-    },
-    OFFBOARDED: {
-      EMP_ID: "Employee ID",
-      NAME: "Employee Name",
-      DEPT: "Department",
-      EXIT_DATE: "Last Working Day",
-      QUARTER: "Quarter"
-    }
+    CONFIG: "_Config",
+    QA_TEST: "QA Test Harness"
   }
 };
 
-function getConfigSheet() {
+/**
+ * Automatically initializes or reads live environment configurations from the sheet layer
+ */
+function getLiveConfig() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(CONFIG.SHEETS.CONFIG);
+  
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.SHEETS.CONFIG);
-    sheet.getRange("A1").setValue("Setting");
-    sheet.getRange("B1").setValue("Value");
-    sheet.getRange("A2").setValue("LWD_ALERT_DAYS");
-    sheet.getRange("B2").setValue(45);
-    sheet.getRange("A3").setValue("PROBATION_ALERT_DAYS");
-    sheet.getRange("B3").setValue(30);
-    sheet.getRange("A4").setValue("PROBATION_PERIOD_DAYS");
-    sheet.getRange("B4").setValue(180);
-    sheet.getRange("A5").setValue("PRODUCTIVITY_TARGET");
-    sheet.getRange("B5").setValue(75);
-    sheet.getRange("A6").setValue("HR_RECIPIENT");
-    sheet.getRange("B6").setValue("hr@yourcompany.com");
+    sheet.appendRow(["Configuration Parameter", "Active Operational Value", "Documentation Reference"]);
+    sheet.appendRow(["LWD_ALERT_DAYS", 45, "Intern offboarding notification window"]);
+    sheet.appendRow(["PROBATION_ALERT_DAYS", 30, "Probation tracking evaluation threshold"]);
+    sheet.appendRow(["PROBATION_PERIOD_DAYS", 180, "Standard employment validation window"]);
+    sheet.appendRow(["PRODUCTIVITY_TARGET", 75, "Minimum targeted structural productivity percentage"]);
+    sheet.appendRow(["HR_RECIPIENT", "hr@techolution.com", "Target email pipeline endpoint"]);
+    sheet.getRange("A1:C1").setBackground("#1e3a8a").setFontColor("#ffffff").setFontWeight("bold");
+    sheet.autoResizeColumns(1, 3);
   }
-  return sheet;
-}
-
-function getLiveConfig() {
-  var sheet = getConfigSheet();
+  
   var data = sheet.getDataRange().getValues();
-  var cfg = {};
+  var liveMap = {};
   for (var i = 1; i < data.length; i++) {
-    cfg[data[i][0]] = data[i][1];
+    if (data[i][0]) {
+      liveMap[data[i][0].toString().trim()] = data[i][1];
+    }
   }
-  return cfg;
+  return liveMap;
 }
